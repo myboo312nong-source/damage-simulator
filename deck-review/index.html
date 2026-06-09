@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>宝可梦卡组竖版评分卡</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  </head>
+  <body>
+    <main class="phone-frame">
+      <section class="hero">
+        <div class="topbar">
+          <div>
+            <p>PTCG DECK REVIEW</p>
+            <input id="deckName" value="多龙巴鲁托 ex" aria-label="卡组名称" />
+          </div>
+          <div class="lang-toggle" aria-label="卡图语言">
+            <button class="active" type="button" data-lang="cn">简中</button>
+            <button type="button" data-lang="en">EN</button>
+          </div>
+        </div>
+
+        <div class="cover-stage" id="coverStage" role="button" tabindex="0" aria-label="点击替换卡组展示图">
+          <img class="deck-upload-preview" id="deckUploadPreview" alt="卡组展示图" />
+          <img class="cover-card side left" id="coverCardLeft" alt="" />
+          <img class="cover-card main" id="coverCardMain" alt="" />
+          <img class="cover-card side right" id="coverCardRight" alt="" />
+          <div class="upload-hint" id="uploadHint">
+            <i data-lucide="image-plus"></i>
+            <span>点击替换卡表图</span>
+          </div>
+          <div class="stamp stamp-hidden" id="stamp"><span>S级推荐</span></div>
+        </div>
+        <input class="visually-hidden" id="deckImageInput" type="file" accept="image/*" />
+
+        <div class="meta-row">
+          <input id="deckType" value="中速进化 / 伤害分配" aria-label="定位" />
+          <input id="deckFormat" value="简中环境 · 竖屏速览" aria-label="环境" />
+        </div>
+      </section>
+
+      <section class="deck-card">
+        <div class="section-head">
+          <div>
+            <p>KEY CARDS</p>
+            <input class="section-title-input" id="coreTitle" value="核心组件" aria-label="核心组件标题" />
+          </div>
+          <button class="icon-button" id="openSearchBtn" title="搜索卡图" aria-label="搜索卡图">
+            <i data-lucide="search"></i>
+          </button>
+        </div>
+        <div class="mini-cards" id="miniCards"></div>
+      </section>
+
+      <section class="focus-card">
+        <img class="focus-image" id="focusImage" alt="" />
+        <div class="focus-copy">
+          <div class="pill-row">
+            <span id="keyRole" contenteditable="true" aria-label="单卡定位">主攻手</span>
+            <span id="keyCost" contenteditable="true" aria-label="单卡类型">2进化</span>
+            <span id="keyCount" contenteditable="true" aria-label="单卡张数">3张</span>
+          </div>
+          <h2 id="keyCardName" contenteditable="true" aria-label="单卡标题">多龙巴鲁托ex</h2>
+          <textarea id="keyDescription" rows="3"></textarea>
+        </div>
+      </section>
+
+      <section class="rating-card">
+        <div class="score-block">
+          <span>综合评分</span>
+          <strong id="avgScore">0.0</strong>
+          <em id="tierText">-</em>
+        </div>
+        <div class="ratings" id="ratings"></div>
+        <div class="final-line">
+          <input id="stampText" value="S级推荐" maxlength="8" aria-label="印章文字" />
+          <button id="generateStampBtn" type="button">盖章</button>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="search-dialog" id="searchDialog">
+      <form method="dialog" class="search-panel">
+        <div class="section-head">
+          <div>
+            <p>CARD IMAGE</p>
+            <h2>搜索卡图</h2>
+          </div>
+          <button class="icon-button" value="close" aria-label="关闭">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+        <div class="search-grid">
+          <select id="searchCardSelect" aria-label="应用到哪张卡"></select>
+          <select id="cardSearchSource" aria-label="卡库来源">
+            <option value="cryst">Cryst 简中卡库</option>
+            <option value="limitless">Limitless 英文卡库</option>
+          </select>
+          <input id="cardSearchInput" type="text" placeholder="例如 多龙巴鲁托 / Dragapult" />
+          <button class="search-button" id="cardSearchBtn" type="button">搜索</button>
+        </div>
+        <div class="search-status" id="cardSearchStatus">选择来源后搜索，点击结果即可替换卡图。</div>
+        <div class="search-results" id="cardSearchResults"></div>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
