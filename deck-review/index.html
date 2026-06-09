@@ -67,16 +67,14 @@
       </section>
 
       <section class="rating-card">
-        <div class="score-block">
-          <span>综合评分</span>
-          <strong id="avgScore">0.0</strong>
-          <em id="tierText">-</em>
+        <div class="rating-tools">
+          <div class="ratings" id="ratings"></div>
+          <div class="final-line">
+            <input id="stampText" value="S级推荐" maxlength="8" aria-label="印章文字" />
+            <button id="generateStampBtn" type="button">盖章</button>
+          </div>
         </div>
-        <div class="ratings" id="ratings"></div>
-        <div class="final-line">
-          <input id="stampText" value="S级推荐" maxlength="8" aria-label="印章文字" />
-          <button id="generateStampBtn" type="button">盖章</button>
-        </div>
+        <textarea id="finalReview" rows="3" aria-label="最终评价">最终评价：对局上限高，节奏需要熟练规划。</textarea>
       </section>
     </main>
 
