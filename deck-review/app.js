@@ -103,10 +103,11 @@ const cards = [
 ];
 
 const ratingDefaults = [
-  ["强度", 0],
+  ["爆发", 0],
   ["稳定", 0],
-  ["难度", 0],
+  ["续航", 0],
   ["上限", 0],
+  ["容错", 0],
   ["环境", 0],
 ];
 
@@ -193,17 +194,20 @@ function renderSearchOptions() {
 }
 
 function renderRatings() {
-  ratings.innerHTML = ratingDefaults
-    .map(
-      ([label, value]) => `
-        <div class="rating-row">
-          <strong>${label}</strong>
-          <input type="range" min="0" max="10" step="0.1" value="${value}" aria-label="${label}">
-          <output>${value.toFixed(1)}</output>
-        </div>
-      `,
-    )
-    .join("");
+  ratings.innerHTML = `
+    <div class="radar-panel">
+      <svg class="radar-svg" id="ratingRadar" viewBox="0 0 150 116" aria-label="六维评分图">
+        <g class="radar-grid"></g>
+        <polygon class="radar-fill" points=""></polygon>
+        <g class="radar-points"></g>
+        <text class="radar-tier" x="75" y="59">D</text>
+      </svg>
+      <div class="rating-values" aria-hidden="true">
+        ${ratingDefaults.map(([label, value]) => `<input type="hidden" value="${value.toFixed(1)}" data-label="${escapeAttr(label)}">`).join("")}
+      </div>
+    </div>
+  `;
+  drawRadar();
 }
 
 function scoreToTier(score) {
@@ -219,23 +223,91 @@ function updateScore() {
   const average = inputs.reduce((sum, input) => sum + Number(input.value), 0) / inputs.length;
   const [tier, label] = scoreToTier(average);
 
-  inputs.forEach((input) => {
-    input.nextElementSibling.textContent = Number(input.value).toFixed(1);
-  });
-
-  avgScore.textContent = average.toFixed(1);
-  tierText.textContent = stampGenerated ? tier : "-";
+  if (avgScore) avgScore.textContent = average.toFixed(1);
+  if (tierText) tierText.textContent = stampGenerated ? tier : "-";
   if (!stampText.dataset.touched) stampText.value = label;
   if (stampGenerated) {
     stampLabel.textContent = stampText.value;
   }
+  drawRadar();
+}
+
+function drawRadar() {
+  const svg = document.querySelector("#ratingRadar");
+  if (!svg) return;
+
+  const inputs = [...ratings.querySelectorAll(".rating-values input")];
+  const labels = inputs.map((item) => item.dataset.label);
+  const center = { x: 75, y: 59 };
+  const radius = 35;
+  const axes = inputs.map((input, index) => {
+    const angle = -Math.PI / 2 + (Math.PI * 2 * index) / inputs.length;
+    const score = Math.max(0, Math.min(10, Number(input.value) || 0));
+    return { angle, score, label: labels[index] };
+  });
+
+  const point = (axis, scale = 1) => ({
+    x: center.x + Math.cos(axis.angle) * radius * scale,
+    y: center.y + Math.sin(axis.angle) * radius * scale,
+  });
+  const scorePoints = axes.map((axis) => point(axis, axis.score / 10));
+  const polygonPoints = scorePoints.map((item) => `${item.x.toFixed(1)},${item.y.toFixed(1)}`).join(" ");
+
+  const grid = document.querySelector(".radar-grid");
+  grid.innerHTML = [0.25, 0.5, 0.75, 1]
+    .map((scale) => {
+      const points = axes.map((axis) => point(axis, scale)).map((item) => `${item.x.toFixed(1)},${item.y.toFixed(1)}`).join(" ");
+      return `<polygon points="${points}"></polygon>`;
+    })
+    .join("") +
+    axes
+      .map((axis, index) => {
+        const end = point(axis, 1);
+        const label = point(axis, 1.14);
+        return `
+          <line x1="${center.x}" y1="${center.y}" x2="${end.x.toFixed(1)}" y2="${end.y.toFixed(1)}"></line>
+          <text x="${label.x.toFixed(1)}" y="${label.y.toFixed(1)}" data-index="${index}">${escapeHtml(axis.label)}</text>
+        `;
+      })
+      .join("");
+
+  document.querySelector(".radar-fill").setAttribute("points", polygonPoints);
+  document.querySelector(".radar-points").innerHTML = scorePoints
+    .map(
+      (item, index) => `
+        <circle cx="${item.x.toFixed(1)}" cy="${item.y.toFixed(1)}" r="3.4" data-index="${index}"></circle>
+      `,
+    )
+    .join("");
+  const average = axes.reduce((sum, axis) => sum + axis.score, 0) / axes.length;
+  document.querySelector(".radar-tier").textContent = scoreToTier(average)[0];
+}
+
+function updateRadarFromPointer(event) {
+  const svg = document.querySelector("#ratingRadar");
+  if (!svg) return;
+
+  const rect = svg.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width) * 118;
+  const y = ((event.clientY - rect.top) / rect.height) * 108;
+  const center = { x: 59, y: 55 };
+  const dx = x - center.x;
+  const dy = y - center.y;
+  const inputs = [...ratings.querySelectorAll(".rating-values input")];
+  const angle = Math.atan2(dy, dx);
+  const normalized = (angle + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
+  const index = Math.round(normalized / ((Math.PI * 2) / inputs.length)) % inputs.length;
+  const score = Math.max(0, Math.min(10, (Math.hypot(dx, dy) / 35) * 10));
+  inputs[index].value = (Math.round(score * 2) / 2).toFixed(1);
+  hideStampUntilGenerated();
+  updateScore();
 }
 
 function hideStampUntilGenerated() {
   stampGenerated = false;
   stamp.classList.add("stamp-hidden");
   stamp.classList.remove("stamp-stamping");
-  tierText.textContent = "-";
+  if (tierText) tierText.textContent = "-";
 }
 
 function generateStamp() {
@@ -499,7 +571,26 @@ miniCards.addEventListener("focusin", (event) => {
 
 ratings.addEventListener("input", () => {
   hideStampUntilGenerated();
+  ratings.querySelectorAll(".rating-values input").forEach((input) => {
+    const score = Math.max(0, Math.min(10, Number(input.value) || 0));
+    input.value = score.toFixed(1);
+  });
   updateScore();
+});
+
+ratings.addEventListener("pointerdown", (event) => {
+  if (!event.target.closest("#ratingRadar")) return;
+  updateRadarFromPointer(event);
+  ratings.dataset.draggingRadar = "true";
+});
+
+ratings.addEventListener("pointermove", (event) => {
+  if (ratings.dataset.draggingRadar !== "true") return;
+  updateRadarFromPointer(event);
+});
+
+document.addEventListener("pointerup", () => {
+  delete ratings.dataset.draggingRadar;
 });
 
 stampText.addEventListener("input", () => {
