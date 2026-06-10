@@ -558,6 +558,7 @@ document.querySelector(".focus-card").addEventListener("input", (event) => {
   if (event.target === keyRole) card.role = keyRole.textContent.trim();
   if (event.target === keyCost) card.stage = keyCost.textContent.trim();
   if (event.target === keyCount) card.count = keyCount.textContent.trim();
+  if (event.target === keyDescription) card.description = keyDescription.value;
   renderCards();
 });
 
